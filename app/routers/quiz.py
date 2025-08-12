@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from app.models.schemas import AnswersIn, BookingRequest
 from app.services.data_service import data_service
 from app.services.ai_service import AIService
-from app.data.quiz_data import CAREER_QUIZ
+from app.data.quiz_data import CAREER_QUIZ, CAREER_OPTIONS
 
 router = APIRouter(prefix="/api")
 
@@ -10,6 +10,21 @@ router = APIRouter(prefix="/api")
 async def get_quiz():
     """Get the career quiz questions"""
     return CAREER_QUIZ
+
+@router.get("/quiz/start")
+async def start_quiz():
+    """Initialize a new quiz session and return quiz data"""
+    return {
+        "quiz_questions": CAREER_QUIZ,
+        "career_options": CAREER_OPTIONS,
+        "total_questions": len(CAREER_QUIZ),
+        "message": "Quiz session started successfully"
+    }
+
+@router.get("/career-options")
+async def get_career_options():
+    """Get available career options for exclusion"""
+    return {"career_options": CAREER_OPTIONS}
 
 @router.post("/submit-answers")
 async def submit_answers(payload: AnswersIn):
@@ -21,8 +36,12 @@ async def submit_answers(payload: AnswersIn):
     return {"session_id": session_id}
 
 @router.post("/generate-preview")
-async def generate_preview(session_id: str):
+async def generate_preview(request: dict):
     """Generate AI career preview for a session"""
+    session_id = request.get("session_id")
+    if not session_id:
+        return {"error": "Session ID is required"}
+
     quiz_data = data_service.get_quiz_session(session_id)
     if not quiz_data:
         return {"error": "Session not found"}

@@ -50,15 +50,21 @@ async def chat_with_ai(chat_input: ChatMessage):
 
 @router.get("/chat-history/{session_id}")
 async def get_chat_history(session_id: str):
-    """Get chat conversation history"""
+    """Get chat conversation history for a session"""
     session = data_service.get_chat_session(session_id)
-    if session:
-        return {"conversation_history": session["conversation_history"]}
-    return {"error": "Session not found"}
+    if not session:
+        return {"error": "Session not found"}
+
+    return {
+        "session_id": session_id,
+        "conversation_history": session["conversation_history"]
+    }
 
 @router.delete("/chat-session/{session_id}")
 async def clear_chat_session(session_id: str):
     """Clear a chat session"""
-    if data_service.clear_chat_session(session_id):
-        return {"message": "Session cleared"}
-    return {"error": "Session not found"}
+    success = data_service.clear_chat_session(session_id)
+    if success:
+        return {"message": "Chat session cleared successfully"}
+    else:
+        return {"error": "Session not found"}
